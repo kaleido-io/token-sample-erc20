@@ -1,8 +1,8 @@
-let TokenContract = artifacts.require('FixedSupplyToken');
+let TokenContract = artifacts.require('ERC20BurnableWithInitialSupply');
 
 const truffleAssert = require('truffle-assertions');
 
-contract("FixedSupplyToken", async (accounts) => {
+contract("Burnable Tokens", async (accounts) => {
   const TotalSupply = '1000000000000000000000000';
   let myContract, currentOwner, spender, user1;
 
@@ -26,10 +26,10 @@ contract("FixedSupplyToken", async (accounts) => {
 
       const eventList = await myContract.getPastEvents("allEvents", {fromBlock: blockNumber, toBlock: blockNumber});
       const events = eventList.filter(ev => ev.transactionHash === transactionHash);
-      expect(events.length).to.equal(1);
-      expect(events[0].args.tokens.toString()).to.equal(TotalSupply);
+      expect(events.length).to.equal(2); // OwnershipTransferred by Ownable, and Transfer by ERC20
+      expect(events[1].args.value.toString()).to.equal(TotalSupply);
 
-      currentOwner = events[0].args.to;
+      currentOwner = events[1].args.to;
     });
 
     it("check the contract deployer is the new owner and has all the money", async () => {
@@ -43,7 +43,7 @@ contract("FixedSupplyToken", async (accounts) => {
       let result = await myContract.approve(spender, 1000000);
 
       truffleAssert.eventEmitted(result, 'Approval', ev => {
-        return ev.tokenOwner === currentOwner && ev.spender === spender;
+        return ev.owner === currentOwner && ev.spender === spender;
       }, `Add allowance to ${spender}`);
 
       let allowance = await myContract.allowance(currentOwner, spender);
@@ -89,6 +89,49 @@ contract("FixedSupplyToken", async (accounts) => {
       expect(balance.toString()).to.equal('500');
       balance = await myContract.balanceOf(currentOwner);
       expect(balance.toString()).to.equal('999999999999999999998500');
+    });
+  });
+
+  describe('burn baby burn!', () => {
+    it('current owner can burn tokens', async () => {
+      let result = await myContract.burn(1000);
+
+      truffleAssert.eventEmitted(result, 'Transfer', ev => {
+        return ev.from === currentOwner && ev.to === '0x0000000000000000000000000000000000000000';
+      }, `Burn my own tokens`);
+
+      let balance = await myContract.balanceOf(currentOwner);
+      expect(balance.toString()).to.equal('999999999999999999997500');
+      balance = await myContract.totalSupply();
+      expect(balance.toString()).to.equal('999999999999999999999000');
+    });
+
+    it('spender can also burn its own tokens', async () => {
+      let result = await myContract.burn(100, { from: spender });
+
+      truffleAssert.eventEmitted(result, 'Transfer', ev => {
+        return ev.from === spender && ev.to === '0x0000000000000000000000000000000000000000';
+      }, `Burn my own tokens`);
+
+      let balance = await myContract.balanceOf(spender);
+      expect(balance.toString()).to.equal('400');
+      balance = await myContract.totalSupply();
+      expect(balance.toString()).to.equal('999999999999999999998900');
+    });
+
+    it('spender can also burn tokens from its allowance', async () => {
+      let result = await myContract.burnFrom(currentOwner, 500, { from: spender });
+
+      truffleAssert.eventEmitted(result, 'Transfer', ev => {
+        return ev.from === currentOwner && ev.to === '0x0000000000000000000000000000000000000000';
+      }, `Burn allowed tokens`);
+
+      let balance = await myContract.balanceOf(spender);
+      expect(balance.toString()).to.equal('400'); // stays the same since spender didn't burn its own tokens
+      balance = await myContract.balanceOf(currentOwner);
+      expect(balance.toString()).to.equal('999999999999999999997000');
+      balance = await myContract.totalSupply();
+      expect(balance.toString()).to.equal('999999999999999999998400');
     });
   });
 });
