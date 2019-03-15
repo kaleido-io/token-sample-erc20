@@ -63,6 +63,7 @@ burn baby burn!
 ## Getting Started
 
 Instal [truffle](https://truffleframework.com/truffle)
+
 Install [Ganache](https://truffleframework.com/ganache) and start it
 
 ```
