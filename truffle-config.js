@@ -20,8 +20,15 @@ module.exports = {
     development: {
      host: "127.0.0.1",     // default for Ganache
      port: 7545,            // default for Ganache
-     network_id: "*",       // Any network (default: none)
+     network_id: "*"        // Any network (default: none)
     },
+    // default for a local setup based on
+    // https://hackernoon.com/setup-your-own-private-proof-of-authority-ethereum-network-with-geth-9a0a3750cda8
+    local: {
+     host: "localhost",
+     port: 22001,
+     network_id: "*"
+    }
   },
 
   // Set default mocha options here, use special reporters etc.
