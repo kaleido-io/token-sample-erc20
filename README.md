@@ -1,6 +1,6 @@
 # token-sample-erc20
 
-The purpose of this sample project is demonstrating ERC20 token contracts based on the awesome openzeppelin contract library, and features of the ERC20 token specification with truffel test scenarios.
+The purpose of this sample project is demonstrating [ERC20 token](https://eips.ethereum.org/EIPS/eip-20) contracts based on the awesome openzeppelin contract library, and features of the ERC20 token specification with truffel test scenarios.
 
 ## Token Contracts Demonstrated
 
